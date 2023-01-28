@@ -15,15 +15,22 @@ let port = process.env.PORT || 3001;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://jointalk.netlify.app",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
 
+let connectedUsers = {};
+
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
+  connectedUsers[socket.id] = socket.id;
+  io.emit("user connected", connectedUsers);
+
+  console.log(connectedUsers);
 
   socket.emit("me", socket.id);
+  socket.emit("connectedUsers", connectedUsers);
 
   socket.on("join_room", (data) => {
     socket.join(data);
@@ -36,6 +43,8 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     socket.broadcast.emit("callEnded");
     console.log("User Disconnected", socket.id);
+    delete connectedUsers[socket.id];
+    io.emit("user disconnected", connectedUsers);
   });
 
   //Calling User
