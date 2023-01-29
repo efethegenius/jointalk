@@ -15,6 +15,7 @@ let port = process.env.PORT || 3001;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
+    // origin: "http://localhost:3000",
     origin: "https://jointalk.netlify.app",
     methods: ["GET", "POST"],
   },
@@ -24,8 +25,17 @@ let connectedUsers = {};
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
-  connectedUsers[socket.id] = socket.id;
-  io.emit("user connected", connectedUsers);
+
+  // connectedUsers[socket.id] = socket.id;
+  // io.emit("user connected", connectedUsers);
+
+  socket.on("new user", (username) => {
+    connectedUsers[socket.id] = {
+      id: socket.id,
+      username: username,
+    };
+    io.emit("user connected", connectedUsers);
+  });
 
   console.log(connectedUsers);
 
@@ -37,7 +47,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_message", (data) => {
-    socket.to(data.room).emit("receive_message", data);
+    const recipientSocket = Object.values(connectedUsers).find(
+      (user) => user.id === data.recipient
+    );
+    if (recipientSocket) {
+      socket.to(recipientSocket.id).emit("receive_message", data);
+    } else {
+      socket.emit("error", { message: "Recipient not found" });
+    }
+    // socket.to(data.room).emit("receive_message", data);
   });
 
   socket.on("disconnect", () => {
