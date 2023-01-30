@@ -67,16 +67,26 @@ io.on("connection", (socket) => {
 
   //Calling User
   socket.on("callUser", (data) => {
-    io.to(data.userToCall).emit("callUser", {
-      signal: data.signalData,
-      from: data.from,
-      name: data.name,
-    });
+    try {
+      io.to(data.userToCall).emit("callUser", {
+        signal: data.signalData,
+        from: data.from,
+        name: data.name,
+      });
+      console.log("successfully called");
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   //Answering User
   socket.on("answerCall", (data) => {
-    io.to(data.to).emit("callAccepted", data.signal);
+    try {
+      io.to(data.to).emit("callAccepted", data.signal);
+      console.log("successfully answered");
+    } catch (error) {
+      console.log(error);
+    }
   });
 });
 
